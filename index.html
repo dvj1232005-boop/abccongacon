@@ -99,36 +99,7 @@ footer{text-align:center;margin-top:16px;font-size:12px;color:#eee}
 
     <div id="summary"></div>
     <button class="secondary" onclick="logoutManager()">Đăng xuất</button>
-    <button class="secondary" onclick="clearAll()">Xóa toàn bộ đăng ký</button>
-  </div>
-
-  <footer>© 2025 An Quy Chế</footer>
-</div>
-
-<script>
-/* ===== CẤU HÌNH ===== */
-const DAYS=["T2","T3","T4","T5","T6","T7","CN"];
-const SHIFTS=[
-  "C1",
-  "C2",
-  "C3",
-  "F1",
-  "F2",
-  "2C (C1+C2)",
-  "2C (C2+C3)"
-];
-const ADMIN_PIN="2005";
-
-/* ===== KHÓA THỜI GIAN ===== */
-function isLocked(){
-  const n=new Date();
-  const d=n.getDay(), h=n.getHours();
-  return (d===5 && h>=20) || d===6 || d===0;
-}
-document.getElementById("lockStatus").textContent =
-  isLocked()
-  ?"⛔ Đã khóa đăng ký • Mở lại Thứ 2"
-  :"✅ Đang mở đăng ký • Khóa lúc 20:00 Thứ 6";
+    <button class="secondary" onclick="clearAll()">Xóa toàn bộ ";
 
 /* ===== FORM ===== */
 const form=document.getElementById("form");
@@ -137,8 +108,7 @@ DAYS.forEach(d=>{
     <div class="day">${d}</div>
     <select id="${d}">
       <option value="">Không đăng ký</option>
-      ${SHIFTS.map(s=>`<option>${s}</option>`).join("")}
-    </select>
+      ${SHIFTS.map(s=>`<option>${s}</option>`).join("")}.    </select>
   `;
 });
 

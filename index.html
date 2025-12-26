@@ -2,11 +2,22 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+
+<!-- VIEWPORT CHUẨN APP – CHỐNG ZOOM -->
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <title>An Quy Chế – Đăng ký ca làm</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b3d2e">
+
+<!-- iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AnQuyChe">
+<link rel="apple-touch-icon" href="icon-192.png">
 
 <style>
 :root{
@@ -18,9 +29,7 @@ content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable
   --muted:#64748b;
   --radius:20px;
 }
-
 *{box-sizing:border-box}
-
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto;
@@ -28,7 +37,7 @@ body{
   color:var(--text);
 }
 
-/* ===== LAYOUT ===== */
+/* LAYOUT */
 .container{
   max-width:420px;
   margin:auto;
@@ -43,15 +52,15 @@ body{
 }
 .hidden{display:none}
 
-/* ===== TYPO ===== */
+/* TEXT */
 h2{margin:0 0 6px;font-size:20px}
 .sub{font-size:14px;color:var(--muted)}
 
-/* ===== INPUT ===== */
+/* INPUT */
 input,select{
   width:100%;
   height:48px;
-  font-size:16px;               /* chống zoom iOS */
+  font-size:16px; /* CHỐNG ZOOM iOS */
   padding:0 14px;
   margin-top:12px;
   border-radius:14px;
@@ -63,7 +72,7 @@ input:focus,select:focus{
   box-shadow:0 0 0 3px rgba(11,61,46,.12);
 }
 
-/* ===== BUTTON ===== */
+/* BUTTON */
 button{
   width:100%;
   height:48px;
@@ -82,7 +91,7 @@ button.secondary{
 }
 button:active{transform:scale(.98)}
 
-/* ===== DAY ===== */
+/* DAY */
 .day{
   margin-top:18px;
   font-size:13px;
@@ -92,7 +101,7 @@ button:active{transform:scale(.98)}
   letter-spacing:.5px;
 }
 
-/* ===== MANAGER ===== */
+/* MANAGER */
 .shiftBox{
   background:#f1f5f9;
   border-radius:14px;
@@ -109,7 +118,7 @@ button:active{transform:scale(.98)}
   color:white;
 }
 
-/* ===== FOOTER ===== */
+/* FOOTER */
 footer{
   text-align:center;
   margin-top:24px;
@@ -123,7 +132,7 @@ footer{
 
 <div class="container">
 
-  <!-- ===== NHÂN VIÊN ===== -->
+  <!-- NHÂN VIÊN -->
   <div class="card" id="employeeBox">
     <h2>Đăng ký ca làm</h2>
     <div class="sub" id="lockStatus"></div>
@@ -133,13 +142,13 @@ footer{
     <div id="form"></div>
 
     <button onclick="submitShift()">Xác nhận đăng ký</button>
-    <button class="secondary" onclick="showManagerLogin()">Quản lý</button>
+    <button class="secondary" onclick="showManager()">Quản lý</button>
   </div>
 
-  <!-- ===== QUẢN LÝ ===== -->
+  <!-- QUẢN LÝ -->
   <div class="card hidden" id="managerBox">
     <h2>Quản lý ca làm</h2>
-    <input id="pin" type="password" placeholder="Nhập mã PIN">
+    <input id="pin" type="password" placeholder="Nhập mã PIN quản lý">
     <button onclick="loginManager()">Đăng nhập</button>
 
     <div id="summary"></div>
@@ -161,10 +170,9 @@ function isLocked(){
   const d=n.getDay(), h=n.getHours();
   return (d===5 && h>=20) || d===6 || d===0;
 }
-const lockStatus=document.getElementById("lockStatus");
-lockStatus.textContent=isLocked()
-  ?"⛔ Đã khóa đăng ký • Mở lại Thứ 2"
-  :"✅ Đang mở đăng ký • Khóa lúc 20:00 Thứ 6";
+document.getElementById("lockStatus").textContent =
+  isLocked() ? "⛔ Đã khóa đăng ký • Mở lại Thứ 2"
+             : "✅ Đang mở đăng ký • Khóa lúc 20:00 Thứ 6";
 
 /* ===== FORM ===== */
 const form=document.getElementById("form");
@@ -201,14 +209,12 @@ function submitShift(){
 }
 
 /* ===== MANAGER ===== */
-function showManagerLogin(){
+function showManager(){
   document.getElementById("managerBox").classList.remove("hidden");
 }
-
 function loginManager(){
   if(document.getElementById("pin").value!==ADMIN_PIN)
     return alert("Sai mã PIN");
-
   renderSummary();
 }
 
@@ -236,8 +242,7 @@ function renderSummary(){
         <div class="shiftBox">
           <b>${s}</b><br>
           ${sum[d][s].map(n=>`<span class="badge">${n}</span>`).join("")}
-        </div>
-      `;
+        </div>`;
     });
   });
 }
@@ -250,5 +255,14 @@ function clearAll(){
   }
 }
 </script>
+
+<!-- SERVICE WORKER -->
+<script>
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
+
 </body>
 </html>
+

@@ -46,6 +46,7 @@ button{
   color:white;
   font-weight:600;
   margin-top:12px;
+  cursor:pointer;
 }
 .secondary{
   background:#e5e7eb;
@@ -78,7 +79,7 @@ footer{text-align:center;margin-top:16px;font-size:12px;color:#eee}
 <div class="container">
 
   <!-- NHÂN VIÊN -->
-  <div class="card">
+  <div class="card" id="employeeBox">
     <h2>Đăng ký ca làm</h2>
     <div class="sub" id="lockStatus"></div>
 
@@ -93,10 +94,11 @@ footer{text-align:center;margin-top:16px;font-size:12px;color:#eee}
   <!-- QUẢN LÝ -->
   <div class="card hidden" id="managerBox">
     <h2>Quản lý ca làm</h2>
-    <input id="pin" type="password" placeholder="Nhập mã PIN">
+    <input id="pin" type="password" placeholder="Nhập mã PIN quản lý">
     <button onclick="loginManager()">Đăng nhập</button>
 
     <div id="summary"></div>
+    <button class="secondary" onclick="logoutManager()">Đăng xuất</button>
     <button class="secondary" onclick="clearAll()">Xóa toàn bộ đăng ký</button>
   </div>
 
@@ -140,7 +142,7 @@ DAYS.forEach(d=>{
   `;
 });
 
-/* ===== NHÂN VIÊN SUBMIT ===== */
+/* ===== NHÂN VIÊN ===== */
 function submitShift(){
   if(isLocked()) return alert("Đã khóa đăng ký");
   const name=document.getElementById("name").value.trim();
@@ -165,12 +167,28 @@ function submitShift(){
 /* ===== QUẢN LÝ ===== */
 function showManager(){
   document.getElementById("managerBox").classList.remove("hidden");
+  document.getElementById("pin").focus();
 }
 
 function loginManager(){
-  if(document.getElementById("pin").value!==ADMIN_PIN)
-    return alert("Sai mã PIN");
+  const pin=document.getElementById("pin").value;
+  if(pin!==ADMIN_PIN){
+    alert("Sai mã PIN");
+    return;
+  }
+
+  // Ẩn nhân viên – hiện quản lý
+  document.getElementById("employeeBox").classList.add("hidden");
+  document.getElementById("managerBox").classList.remove("hidden");
+
   renderSummary();
+}
+
+/* ===== ĐĂNG XUẤT ===== */
+function logoutManager(){
+  document.getElementById("managerBox").classList.add("hidden");
+  document.getElementById("employeeBox").classList.remove("hidden");
+  document.getElementById("pin").value="";
 }
 
 /* ===== TỔNG HỢP ===== */
@@ -212,4 +230,5 @@ function clearAll(){
 </script>
 </body>
 </html>
+
 

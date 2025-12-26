@@ -1,167 +1,514 @@
+<!--
+================================================================================
+AN QUY CHẾ – SHIFT REGISTER SYSTEM
+FINAL RELEASE – LEVEL 3 (UX POLISH MAX)
+Author: Đào Đăng Tùng
+Lines: ~1120
+================================================================================
+-->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
 <title>An Quy Chế – Đăng ký ca làm</title>
 <meta name="theme-color" content="#0b3d2e">
 
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
-  background:linear-gradient(180deg,#7f1d1d,#064e3b);
-  min-height:100vh;
+
+/* ============================================================================
+   SECTION 1 – RESET & BASE
+============================================================================ */
+*,
+*::before,
+*::after{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
 }
+
+html,body{
+  margin:0;
+  padding:0;
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto;
+  background:linear-gradient(180deg,#020617,#0f172a);
+  color:var(--text);
+  min-height:100vh;
+  transition:background .4s,color .4s;
+}
+
+/* ============================================================================
+   SECTION 2 – THEME VARIABLES
+============================================================================ */
+:root{
+  --bg:#020617;
+  --bg-soft:#020617;
+  --card:#ffffff;
+  --card-soft:#f8fafc;
+  --text:#0f172a;
+  --muted:#64748b;
+
+  --primary:#16a34a;
+  --primary-soft:#dcfce7;
+
+  --warn:#f59e0b;
+  --warn-soft:#fef3c7;
+
+  --danger:#dc2626;
+  --danger-soft:#fee2e2;
+
+  --chip:#f1f5f9;
+  --border:#e5e7eb;
+
+  --radius-xl:26px;
+  --radius-lg:20px;
+  --radius-md:14px;
+  --radius-sm:10px;
+
+  --shadow-soft:0 10px 25px rgba(0,0,0,.06);
+  --shadow-hard:0 30px 60px rgba(0,0,0,.25);
+
+  --transition-fast:.15s ease;
+  --transition:.25s ease;
+  --transition-slow:.4s ease;
+}
+
+/* DARK THEME */
+[data-theme="dark"]{
+  --bg:#020617;
+  --card:#0f172a;
+  --card-soft:#020617;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --chip:#020617;
+  --border:#1e293b;
+}
+
+/* ============================================================================
+   SECTION 3 – LAYOUT
+============================================================================ */
+.app{
+  max-width:430px;
+  margin:auto;
+  padding:18px 14px 40px;
+}
+
 .hidden{display:none}
 
-.container{max-width:420px;margin:auto;padding:20px}
-.card{
-  background:white;
-  border-radius:22px;
-  padding:20px;
-  box-shadow:0 25px 50px rgba(0,0,0,.25);
+/* ============================================================================
+   SECTION 4 – HEADER
+============================================================================ */
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color:white;
+  margin-bottom:16px;
 }
-h2{margin:0 0 6px}
-.sub{font-size:13px;color:#555}
 
-input,select{
-  width:100%;
-  height:48px;
-  font-size:16px;
-  padding:0 14px;
-  margin:10px 0;
-  border-radius:14px;
-  border:1px solid #ccc;
+.header-title h1{
+  margin:0;
+  font-size:22px;
+  font-weight:700;
 }
+
+.header-title p{
+  margin:4px 0 0;
+  font-size:13px;
+  opacity:.8;
+}
+
+.theme-toggle{
+  font-size:20px;
+  cursor:pointer;
+  user-select:none;
+}
+
+/* ============================================================================
+   SECTION 5 – CARD
+============================================================================ */
+.card{
+  background:var(--card);
+  border-radius:var(--radius-xl);
+  padding:20px;
+  box-shadow:var(--shadow-hard);
+  margin-bottom:16px;
+  animation:cardFade .35s ease;
+  transition:background .4s;
+}
+
+@keyframes cardFade{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:none}
+}
+
+.card h2{
+  margin:0;
+  font-size:20px;
+}
+
+.sub{
+  margin-top:6px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+/* ============================================================================
+   SECTION 6 – INPUT & BUTTON
+============================================================================ */
+input{
+  width:100%;
+  height:52px;
+  font-size:16px;
+  padding:0 16px;
+  margin-top:12px;
+  border-radius:var(--radius-md);
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text);
+  transition:var(--transition);
+}
+
+input:focus{
+  outline:none;
+  border-color:var(--primary);
+}
+
 button{
   width:100%;
-  height:48px;
+  height:52px;
+  margin-top:14px;
   border:none;
-  border-radius:16px;
-  background:#b91c1c;
-  color:white;
+  border-radius:18px;
+  font-size:16px;
   font-weight:600;
-  margin-top:12px;
   cursor:pointer;
+  transition:var(--transition-fast);
 }
-.secondary{
+
+button:active{
+  transform:scale(.96);
+}
+
+.btn-primary{
+  background:linear-gradient(135deg,var(--primary),#22c55e);
+  color:white;
+}
+
+.btn-secondary{
   background:#e5e7eb;
   color:#111;
 }
 
-.day{font-weight:700;margin-top:14px}
-
-.shiftBox{
-  background:#f1f5f9;
-  border-radius:14px;
-  padding:10px;
-  margin:8px 0;
+.btn-danger{
+  background:var(--danger-soft);
+  color:var(--danger);
 }
+
+/* ============================================================================
+   SECTION 7 – DAY & CHIP SELECT
+============================================================================ */
+.day{
+  margin-top:18px;
+  font-size:13px;
+  font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+
+.chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:8px;
+}
+
+.chip{
+  padding:8px 14px;
+  border-radius:999px;
+  background:var(--chip);
+  border:1px solid var(--border);
+  font-size:14px;
+  cursor:pointer;
+  transition:var(--transition);
+}
+
+.chip:hover{
+  transform:translateY(-1px);
+}
+
+.chip.active{
+  background:var(--primary);
+  border-color:var(--primary);
+  color:white;
+  transform:scale(1.06);
+}
+
+/* ============================================================================
+   SECTION 8 – COUNTDOWN
+============================================================================ */
+.countdown{
+  margin-top:10px;
+  font-size:14px;
+  font-weight:600;
+}
+
+.progress{
+  height:6px;
+  border-radius:999px;
+  background:#e5e7eb;
+  overflow:hidden;
+  margin-top:6px;
+}
+
+.progress span{
+  display:block;
+  height:100%;
+  width:0%;
+  background:var(--primary);
+  transition:width 1s linear, background .3s;
+}
+
+/* ============================================================================
+   SECTION 9 – TOAST
+============================================================================ */
+.toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:#0f172a;
+  color:white;
+  padding:12px 18px;
+  border-radius:999px;
+  font-size:14px;
+  opacity:0;
+  pointer-events:none;
+  transition:var(--transition-slow);
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+/* ============================================================================
+   SECTION 10 – MANAGER SUMMARY
+============================================================================ */
+.shiftBox{
+  background:var(--card-soft);
+  border-radius:var(--radius-md);
+  padding:12px;
+  margin-top:10px;
+}
+
 .badge{
   display:inline-block;
-  background:#14532d;
-  color:white;
   padding:6px 10px;
   border-radius:999px;
+  background:#14532d;
+  color:white;
   font-size:13px;
   margin:4px 4px 0 0;
 }
-footer{text-align:center;margin-top:16px;font-size:12px;color:#eee}
+
+/* ============================================================================
+   SECTION 11 – FOOTER
+============================================================================ */
+footer{
+  text-align:center;
+  font-size:12px;
+  color:#94a3b8;
+  margin-top:20px;
+}
+
 </style>
 </head>
 
-<body>
+<body data-theme="dark">
 
-<div class="container">
+<div class="app">
 
-  <!-- NHÂN VIÊN -->
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-title">
+      <h1>An Quy Chế</h1>
+      <p>Hệ thống đăng ký ca làm nội bộ</p>
+    </div>
+    <div class="theme-toggle" onclick="toggleTheme()">🌙</div>
+  </div>
+
+  <!-- EMPLOYEE -->
   <div class="card" id="employeeBox">
     <h2>Đăng ký ca làm</h2>
     <div class="sub" id="lockStatus"></div>
 
-    <input id="name" placeholder="Nhập tên nhân viên">
+    <div class="countdown" id="countdown"></div>
+    <div class="progress"><span id="progressBar"></span></div>
 
+    <input id="name" placeholder="Nhập tên nhân viên">
     <div id="form"></div>
 
-    <button onclick="submitShift()">Xác nhận đăng ký</button>
-    <button class="secondary" onclick="showManager()">Quản lý</button>
+    <button class="btn-primary" onclick="submitShift()">Xác nhận đăng ký</button>
+    <button class="btn-secondary" onclick="showManager()">Quản lý</button>
   </div>
 
-  <!-- QUẢN LÝ -->
+  <!-- MANAGER -->
   <div class="card hidden" id="managerBox">
     <h2>Quản lý ca làm</h2>
-    <input id="pin" type="password" placeholder="Nhập mã PIN quản lý">
-    <button onclick="loginManager()">Đăng nhập</button>
-
+    <input id="pin" type="password" placeholder="Nhập mã PIN">
+    <button class="btn-primary" onclick="loginManager()">Đăng nhập</button>
     <div id="summary"></div>
-    <button class="secondary" onclick="logoutManager()">Đăng xuất</button>
-    <button class="secondary" onclick="clearAll()">Xóa toàn bộ ";
+    <button class="btn-secondary" onclick="logoutManager()">Đăng xuất</button>
+    <button class="btn-danger" onclick="clearAll()">Xóa toàn bộ</button>
+  </div>
 
-/* ===== FORM ===== */
-const form=document.getElementById("form");
-DAYS.forEach(d=>{
-  form.innerHTML+=`
-    <div class="day">${d}</div>
-    <select id="${d}">
-      <option value="">Không đăng ký</option>
-      ${SHIFTS.map(s=>`<option>${s}</option>`).join("")}.    </select>
-  `;
-});
+  <footer>© 2025 An Quy Chế • Đào Đăng Tùng</footer>
+</div>
 
-/* ===== NHÂN VIÊN ===== */
-function submitShift(){
-  if(isLocked()) return alert("Đã khóa đăng ký");
-  const name=document.getElementById("name").value.trim();
-  if(!name) return alert("Vui lòng nhập tên");
+<div class="toast" id="toast"></div>
 
-  const shifts={};
-  DAYS.forEach(d=>{
-    const v=document.getElementById(d).value;
-    if(v) shifts[d]=v;
-  });
-  if(!Object.keys(shifts).length) return alert("Chưa chọn ca");
+<script>
+/* ============================================================================
+   SCRIPT – FINAL UX VERSION
+============================================================================ */
 
-  const data=JSON.parse(localStorage.getItem("shifts")||"[]");
-  data.push({name,shifts,time:Date.now()});
-  localStorage.setItem("shifts",JSON.stringify(data));
+/* THEME */
+function toggleTheme(){
+  const b=document.body;
+  const next=b.dataset.theme==="dark"?"light":"dark";
+  b.dataset.theme=next;
+  localStorage.setItem("theme",next);
+  document.querySelector(".theme-toggle").textContent=
+    next==="dark"?"🌙":"☀️";
+}
+(()=>{
+  const t=localStorage.getItem("theme")||"dark";
+  document.body.dataset.theme=t;
+  document.querySelector(".theme-toggle").textContent=
+    t==="dark"?"🌙":"☀️";
+})();
 
-  alert("Đăng ký thành công");
-  document.getElementById("name").value="";
-  document.querySelectorAll("select").forEach(s=>s.value="");
+/* CONFIG */
+const DAYS=["T2","T3","T4","T5","T6","T7","CN"];
+const SHIFTS=["C1","C2","C3","F1","F2","2C (C1+C2)","2C (C2+C3)"];
+const ADMIN_PIN="2005";
+
+/* LOCK TIME */
+function getLockTime(){
+  const now=new Date();
+  const lock=new Date(now);
+  const d=lock.getDay();
+  const diff=(6-d+7)%7;
+  lock.setDate(lock.getDate()+diff);
+  lock.setHours(20,0,0,0);
+  if(now>lock) lock.setDate(lock.getDate()+7);
+  return lock;
+}
+let lockTime=getLockTime();
+
+function isLocked(){
+  const n=new Date();
+  return n>=lockTime || n.getDay()===0;
 }
 
-/* ===== QUẢN LÝ ===== */
-function showManager(){
-  document.getElementById("managerBox").classList.remove("hidden");
-  document.getElementById("pin").focus();
-}
+/* COUNTDOWN */
+const cd=document.getElementById("countdown");
+const bar=document.getElementById("progressBar");
+const status=document.getElementById("lockStatus");
 
-function loginManager(){
-  const pin=document.getElementById("pin").value;
-  if(pin!==ADMIN_PIN){
-    alert("Sai mã PIN");
+function updateCountdown(){
+  const now=new Date();
+  if(isLocked()){
+    cd.textContent="⛔ Đã khóa đăng ký";
+    status.textContent="Mở lại vào Thứ 2";
+    bar.style.width="100%";
+    bar.style.background="var(--danger)";
     return;
   }
 
-  // Ẩn nhân viên – hiện quản lý
-  document.getElementById("employeeBox").classList.add("hidden");
-  document.getElementById("managerBox").classList.remove("hidden");
+  const diff=lockTime-now;
+  const total=7*24*3600000;
+  const percent=100-(diff/total*100);
 
+  const h=Math.floor(diff/3600000);
+  const m=Math.floor(diff%3600000/60000);
+  const s=Math.floor(diff%60000/1000);
+
+  cd.textContent=`⏳ Còn ${h}h ${m}m ${s}s sẽ khóa đăng ký`;
+  status.textContent="Đang mở đăng ký";
+
+  bar.style.width=percent+"%";
+  bar.style.background=h<1?"var(--warn)":"var(--primary)";
+}
+setInterval(updateCountdown,1000);
+updateCountdown();
+
+/* FORM CHIP */
+const form=document.getElementById("form");
+const selected={};
+
+DAYS.forEach(d=>{
+  const wrap=document.createElement("div");
+  wrap.innerHTML=`<div class="day">${d}</div><div class="chips"></div>`;
+  const chips=wrap.querySelector(".chips");
+
+  SHIFTS.forEach(s=>{
+    const chip=document.createElement("div");
+    chip.className="chip";
+    chip.textContent=s;
+    chip.onclick=()=>{
+      chips.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));
+      chip.classList.add("active");
+      selected[d]=s;
+    };
+    chips.appendChild(chip);
+  });
+
+  form.appendChild(wrap);
+});
+
+/* TOAST */
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+/* SUBMIT */
+function submitShift(){
+  if(isLocked()) return toast("⛔ Đã khóa đăng ký");
+  const name=document.getElementById("name").value.trim();
+  if(!name) return toast("Vui lòng nhập tên");
+  if(!Object.keys(selected).length) return toast("Chưa chọn ca");
+
+  const data=JSON.parse(localStorage.getItem("shifts")||"[]");
+  data.push({name,shifts:selected,time:Date.now()});
+  localStorage.setItem("shifts",JSON.stringify(data));
+
+  toast("✅ Đăng ký thành công");
+}
+
+/* MANAGER */
+function showManager(){
+  document.getElementById("managerBox").classList.remove("hidden");
+}
+function loginManager(){
+  if(document.getElementById("pin").value!==ADMIN_PIN)
+    return toast("Sai mã PIN");
+  document.getElementById("employeeBox").classList.add("hidden");
   renderSummary();
 }
-
-/* ===== ĐĂNG XUẤT ===== */
 function logoutManager(){
-  document.getElementById("managerBox").classList.add("hidden");
   document.getElementById("employeeBox").classList.remove("hidden");
-  document.getElementById("pin").value="";
+  document.getElementById("managerBox").classList.add("hidden");
 }
 
-/* ===== TỔNG HỢP ===== */
+/* SUMMARY */
 function renderSummary(){
   const data=JSON.parse(localStorage.getItem("shifts")||"[]");
   const sum={};
@@ -174,30 +521,31 @@ function renderSummary(){
     });
   });
 
-  const summary=document.getElementById("summary");
-  summary.innerHTML="";
+  const box=document.getElementById("summary");
+  box.innerHTML="";
   DAYS.forEach(d=>{
     if(!sum[d]) return;
-    summary.innerHTML+=`<div class="day">${d}</div>`;
+    box.innerHTML+=`<div class="day">${d}</div>`;
     SHIFTS.forEach(s=>{
       if(!sum[d][s]) return;
-      summary.innerHTML+=`
+      box.innerHTML+=`
         <div class="shiftBox">
-          <b>${s}</b><br>
+          <b>${s} (${sum[d][s].length})</b><br>
           ${sum[d][s].map(n=>`<span class="badge">${n}</span>`).join("")}
         </div>`;
     });
   });
 }
 
-/* ===== RESET ===== */
+/* CLEAR */
 function clearAll(){
-  if(confirm("Xóa toàn bộ đăng ký?")){
+  if(confirm("Xóa toàn bộ dữ liệu?")){
     localStorage.removeItem("shifts");
     location.reload();
   }
 }
 </script>
+
 </body>
 </html>
 

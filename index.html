@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>An Quy Chế – Đăng ký ca làm</title>
+<meta name="theme-color" content="#0b3d2e">
+
+<style>
+:root{
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --primary:#0b3d2e;
+  --accent:#b91c1c;
+  --text:#0f172a;
+  --muted:#64748b;
+  --radius:20px;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* ===== LAYOUT ===== */
+.container{
+  max-width:420px;
+  margin:auto;
+  padding:20px 16px 32px;
+}
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,.06),
+             0 2px 6px rgba(0,0,0,.04);
+}
+.hidden{display:none}
+
+/* ===== TYPO ===== */
+h2{margin:0 0 6px;font-size:20px}
+.sub{font-size:14px;color:var(--muted)}
+
+/* ===== INPUT ===== */
+input,select{
+  width:100%;
+  height:48px;
+  font-size:16px;               /* chống zoom iOS */
+  padding:0 14px;
+  margin-top:12px;
+  border-radius:14px;
+  border:1px solid #e2e8f0;
+  outline:none;
+}
+input:focus,select:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(11,61,46,.12);
+}
+
+/* ===== BUTTON ===== */
+button{
+  width:100%;
+  height:48px;
+  margin-top:16px;
+  border:none;
+  border-radius:16px;
+  font-size:16px;
+  font-weight:600;
+  background:var(--primary);
+  color:white;
+  cursor:pointer;
+}
+button.secondary{
+  background:#e5e7eb;
+  color:#111;
+}
+button:active{transform:scale(.98)}
+
+/* ===== DAY ===== */
+.day{
+  margin-top:18px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+
+/* ===== MANAGER ===== */
+.shiftBox{
+  background:#f1f5f9;
+  border-radius:14px;
+  padding:12px;
+  margin-top:10px;
+}
+.badge{
+  display:inline-block;
+  margin:6px 6px 0 0;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:13px;
+  background:var(--primary);
+  color:white;
+}
+
+/* ===== FOOTER ===== */
+footer{
+  text-align:center;
+  margin-top:24px;
+  font-size:12px;
+  color:var(--muted);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- ===== NHÂN VIÊN ===== -->
+  <div class="card" id="employeeBox">
+    <h2>Đăng ký ca làm</h2>
+    <div class="sub" id="lockStatus"></div>
+
+    <input id="name" placeholder="Nhập tên nhân viên">
+
+    <div id="form"></div>
+
+    <button onclick="submitShift()">Xác nhận đăng ký</button>
+    <button class="secondary" onclick="showManagerLogin()">Quản lý</button>
+  </div>
+
+  <!-- ===== QUẢN LÝ ===== -->
+  <div class="card hidden" id="managerBox">
+    <h2>Quản lý ca làm</h2>
+    <input id="pin" type="password" placeholder="Nhập mã PIN">
+    <button onclick="loginManager()">Đăng nhập</button>
+
+    <div id="summary"></div>
+    <button class="secondary" onclick="clearAll()">Xóa toàn bộ đăng ký</button>
+  </div>
+
+  <footer>© 2025 An Quy Chế • Developed by Đào Đăng Tùng</footer>
+</div>
+
+<script>
+/* ===== DATA ===== */
+const DAYS=["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","CN"];
+const SHIFTS=["Sáng","Chiều","Tối"];
+const ADMIN_PIN="2005";
+
+/* ===== LOCK TIME ===== */
+function isLocked(){
+  const n=new Date();
+  const d=n.getDay(), h=n.getHours();
+  return (d===5 && h>=20) || d===6 || d===0;
+}
+const lockStatus=document.getElementById("lockStatus");
+lockStatus.textContent=isLocked()
+  ?"⛔ Đã khóa đăng ký • Mở lại Thứ 2"
+  :"✅ Đang mở đăng ký • Khóa lúc 20:00 Thứ 6";
+
+/* ===== FORM ===== */
+const form=document.getElementById("form");
+DAYS.forEach(d=>{
+  form.innerHTML+=`
+    <div class="day">${d}</div>
+    <select id="${d}">
+      <option value="">Không đăng ký</option>
+      ${SHIFTS.map(s=>`<option>${s}</option>`).join("")}
+    </select>
+  `;
+});
+
+/* ===== SUBMIT ===== */
+function submitShift(){
+  if(isLocked()) return alert("Đã khóa đăng ký");
+  const name=document.getElementById("name").value.trim();
+  if(!name) return alert("Vui lòng nhập tên");
+
+  const shifts={};
+  DAYS.forEach(d=>{
+    const v=document.getElementById(d).value;
+    if(v) shifts[d]=v;
+  });
+  if(!Object.keys(shifts).length) return alert("Chưa chọn ca");
+
+  const data=JSON.parse(localStorage.getItem("shifts")||"[]");
+  data.push({name,shifts,time:Date.now()});
+  localStorage.setItem("shifts",JSON.stringify(data));
+
+  alert("Đăng ký thành công");
+  document.getElementById("name").value="";
+  document.querySelectorAll("select").forEach(s=>s.value="");
+}
+
+/* ===== MANAGER ===== */
+function showManagerLogin(){
+  document.getElementById("managerBox").classList.remove("hidden");
+}
+
+function loginManager(){
+  if(document.getElementById("pin").value!==ADMIN_PIN)
+    return alert("Sai mã PIN");
+
+  renderSummary();
+}
+
+/* ===== SUMMARY ===== */
+function renderSummary(){
+  const data=JSON.parse(localStorage.getItem("shifts")||"[]");
+  const sum={};
+
+  data.forEach(e=>{
+    Object.entries(e.shifts).forEach(([d,s])=>{
+      sum[d]??={};
+      sum[d][s]??=[];
+      sum[d][s].push(e.name);
+    });
+  });
+
+  const summary=document.getElementById("summary");
+  summary.innerHTML="";
+  DAYS.forEach(d=>{
+    if(!sum[d]) return;
+    summary.innerHTML+=`<div class="day">${d}</div>`;
+    SHIFTS.forEach(s=>{
+      if(!sum[d][s]) return;
+      summary.innerHTML+=`
+        <div class="shiftBox">
+          <b>${s}</b><br>
+          ${sum[d][s].map(n=>`<span class="badge">${n}</span>`).join("")}
+        </div>
+      `;
+    });
+  });
+}
+
+/* ===== CLEAR ===== */
+function clearAll(){
+  if(confirm("Xóa toàn bộ dữ liệu?")){
+    localStorage.removeItem("shifts");
+    location.reload();
+  }
+}
+</script>
+</body>
+</html>

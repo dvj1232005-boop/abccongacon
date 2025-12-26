@@ -1,19 +1,23 @@
-<!--
-================================================================================
-AN QUY CHẾ – SHIFT REGISTER SYSTEM
-FINAL RELEASE – LEVEL 3 (UX POLISH MAX)
-Author: Đào Đăng Tùng
-Lines: ~1120
-================================================================================
--->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <title>An Quy Chế – Đăng ký ca làm</title>
+
+<!-- =========================
+     PWA CORE
+========================= -->
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b3d2e">
+
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AnQuyChe">
+<link rel="apple-touch-icon" href="icon-192.png">
 
 <style>
 
@@ -373,7 +377,8 @@ footer{
 
 <script>
 /* ============================================================================
-   SCRIPT – FINAL UX VERSION
+   SCRIPT – PART 1
+   (CORE STATE, THEME, CONFIG)
 ============================================================================ */
 
 /* THEME */
@@ -385,7 +390,8 @@ function toggleTheme(){
   document.querySelector(".theme-toggle").textContent=
     next==="dark"?"🌙":"☀️";
 }
-(()=>{
+
+(function initTheme(){
   const t=localStorage.getItem("theme")||"dark";
   document.body.dataset.theme=t;
   document.querySelector(".theme-toggle").textContent=
@@ -394,156 +400,341 @@ function toggleTheme(){
 
 /* CONFIG */
 const DAYS=["T2","T3","T4","T5","T6","T7","CN"];
-const SHIFTS=["C1","C2","C3","F1","F2","2C (C1+C2)","2C (C2+C3)"];
+const SHIFTS=[
+  "C1",
+  "C2",
+  "C3",
+  "F1",
+  "F2",
+  "2C (C1+C2)",
+  "2C (C2+C3)"
+];
 const ADMIN_PIN="2005";
 
-/* LOCK TIME */
+/* =========================
+   PHẦN 1 KẾT THÚC Ở ĐÂY
+   (KHÔNG ĐÓNG </script>, </body>, </html>)
+   → PHẦN 2 SẼ NỐI TIẾP
+========================= */
+/* ============================================================================
+   SCRIPT – PART 2
+   (TIME ENGINE, DATA LAYER, STATE, MANAGER, PWA)
+============================================================================ */
+
+/* ============================================================================
+   TIME ENGINE – LOCK & COUNTDOWN
+============================================================================ */
+
+/*
+  Quy ước:
+  - Đăng ký mở từ Thứ 2
+  - Khóa lúc 20:00 Thứ 7
+  - Chủ nhật luôn khóa
+*/
+
 function getLockTime(){
-  const now=new Date();
-  const lock=new Date(now);
-  const d=lock.getDay();
-  const diff=(6-d+7)%7;
-  lock.setDate(lock.getDate()+diff);
-  lock.setHours(20,0,0,0);
-  if(now>lock) lock.setDate(lock.getDate()+7);
+  const now = new Date();
+  const lock = new Date(now);
+
+  const day = lock.getDay(); // 0 CN → 6 T7
+  const diff = (6 - day + 7) % 7;
+
+  lock.setDate(lock.getDate() + diff);
+  lock.setHours(20, 0, 0, 0);
+
+  if (now > lock) {
+    lock.setDate(lock.getDate() + 7);
+  }
+
   return lock;
 }
-let lockTime=getLockTime();
+
+let LOCK_TIME = getLockTime();
 
 function isLocked(){
-  const n=new Date();
-  return n>=lockTime || n.getDay()===0;
+  const now = new Date();
+  return now >= LOCK_TIME || now.getDay() === 0;
 }
 
-/* COUNTDOWN */
-const cd=document.getElementById("countdown");
-const bar=document.getElementById("progressBar");
-const status=document.getElementById("lockStatus");
+/* ============================================================================
+   COUNTDOWN RENDER
+============================================================================ */
 
-function updateCountdown(){
-  const now=new Date();
-  if(isLocked()){
-    cd.textContent="⛔ Đã khóa đăng ký";
-    status.textContent="Mở lại vào Thứ 2";
-    bar.style.width="100%";
-    bar.style.background="var(--danger)";
+const countdownEl = document.getElementById("countdown");
+const progressBar = document.getElementById("progressBar");
+const lockStatusEl = document.getElementById("lockStatus");
+
+function renderCountdown(){
+  const now = new Date();
+
+  if (isLocked()) {
+    countdownEl.textContent = "⛔ Đã khóa đăng ký";
+    lockStatusEl.textContent = "Mở lại vào Thứ 2";
+    progressBar.style.width = "100%";
+    progressBar.style.background = "var(--danger)";
+    disableAllChips();
     return;
   }
 
-  const diff=lockTime-now;
-  const total=7*24*3600000;
-  const percent=100-(diff/total*100);
+  const diff = LOCK_TIME - now;
+  const total = 7 * 24 * 60 * 60 * 1000;
+  const percent = 100 - (diff / total * 100);
 
-  const h=Math.floor(diff/3600000);
-  const m=Math.floor(diff%3600000/60000);
-  const s=Math.floor(diff%60000/1000);
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
 
-  cd.textContent=`⏳ Còn ${h}h ${m}m ${s}s sẽ khóa đăng ký`;
-  status.textContent="Đang mở đăng ký";
+  countdownEl.textContent =
+    `⏳ Còn ${h}h ${m}m ${s}s sẽ khóa đăng ký`;
+  lockStatusEl.textContent = "Đang mở đăng ký";
 
-  bar.style.width=percent+"%";
-  bar.style.background=h<1?"var(--warn)":"var(--primary)";
+  progressBar.style.width = percent + "%";
+
+  if (h < 1) {
+    progressBar.style.background = "var(--warn)";
+  } else {
+    progressBar.style.background = "var(--primary)";
+  }
 }
-setInterval(updateCountdown,1000);
-updateCountdown();
 
-/* FORM CHIP */
-const form=document.getElementById("form");
-const selected={};
+setInterval(renderCountdown, 1000);
+renderCountdown();
 
-DAYS.forEach(d=>{
-  const wrap=document.createElement("div");
-  wrap.innerHTML=`<div class="day">${d}</div><div class="chips"></div>`;
-  const chips=wrap.querySelector(".chips");
+/* ============================================================================
+   FORM RENDER – CHIP SELECT ENGINE
+============================================================================ */
 
-  SHIFTS.forEach(s=>{
-    const chip=document.createElement("div");
-    chip.className="chip";
-    chip.textContent=s;
-    chip.onclick=()=>{
-      chips.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));
-      chip.classList.add("active");
-      selected[d]=s;
-    };
-    chips.appendChild(chip);
+const form = document.getElementById("form");
+const selectedShifts = {};
+
+function renderForm(){
+  DAYS.forEach(day => {
+    const wrap = document.createElement("div");
+
+    const dayLabel = document.createElement("div");
+    dayLabel.className = "day";
+    dayLabel.textContent = day;
+
+    const chipWrap = document.createElement("div");
+    chipWrap.className = "chips";
+
+    SHIFTS.forEach(shift => {
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.textContent = shift;
+
+      chip.addEventListener("click", () => {
+        if (isLocked()) {
+          toast("⛔ Đã khóa đăng ký");
+          return;
+        }
+
+        chipWrap.querySelectorAll(".chip")
+          .forEach(c => c.classList.remove("active"));
+
+        chip.classList.add("active");
+        selectedShifts[day] = shift;
+      });
+
+      chipWrap.appendChild(chip);
+    });
+
+    wrap.appendChild(dayLabel);
+    wrap.appendChild(chipWrap);
+    form.appendChild(wrap);
+  });
+}
+
+renderForm();
+
+/* ============================================================================
+   DISABLE CHIP WHEN LOCKED
+============================================================================ */
+
+function disableAllChips(){
+  document.querySelectorAll(".chip").forEach(c => {
+    c.style.pointerEvents = "none";
+    c.style.opacity = ".5";
+  });
+}
+
+/* ============================================================================
+   TOAST ENGINE
+============================================================================ */
+
+function toast(message){
+  const t = document.getElementById("toast");
+  t.textContent = message;
+  t.classList.add("show");
+
+  setTimeout(() => {
+    t.classList.remove("show");
+  }, 2200);
+}
+
+/* ============================================================================
+   DATA LAYER – LOCAL STORAGE
+============================================================================ */
+
+function loadData(){
+  return JSON.parse(localStorage.getItem("shiftData") || "[]");
+}
+
+function saveData(data){
+  localStorage.setItem("shiftData", JSON.stringify(data));
+}
+
+/* ============================================================================
+   VALIDATION
+============================================================================ */
+
+function validateSubmit(name){
+  if (!name) {
+    toast("Vui lòng nhập tên");
+    return false;
+  }
+  if (Object.keys(selectedShifts).length === 0) {
+    toast("Chưa chọn ca làm");
+    return false;
+  }
+  return true;
+}
+
+/* ============================================================================
+   SUBMIT HANDLER
+============================================================================ */
+
+function submitShift(){
+  if (isLocked()) {
+    toast("⛔ Đã khóa đăng ký");
+    return;
+  }
+
+  const name = document.getElementById("name").value.trim();
+
+  if (!validateSubmit(name)) return;
+
+  const data = loadData();
+
+  data.push({
+    name: name,
+    shifts: { ...selectedShifts },
+    createdAt: Date.now()
   });
 
-  form.appendChild(wrap);
-});
-
-/* TOAST */
-function toast(msg){
-  const t=document.getElementById("toast");
-  t.textContent=msg;
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),2200);
-}
-
-/* SUBMIT */
-function submitShift(){
-  if(isLocked()) return toast("⛔ Đã khóa đăng ký");
-  const name=document.getElementById("name").value.trim();
-  if(!name) return toast("Vui lòng nhập tên");
-  if(!Object.keys(selected).length) return toast("Chưa chọn ca");
-
-  const data=JSON.parse(localStorage.getItem("shifts")||"[]");
-  data.push({name,shifts:selected,time:Date.now()});
-  localStorage.setItem("shifts",JSON.stringify(data));
+  saveData(data);
 
   toast("✅ Đăng ký thành công");
 }
 
-/* MANAGER */
+/* ============================================================================
+   MANAGER – AUTH
+============================================================================ */
+
 function showManager(){
   document.getElementById("managerBox").classList.remove("hidden");
 }
+
 function loginManager(){
-  if(document.getElementById("pin").value!==ADMIN_PIN)
-    return toast("Sai mã PIN");
+  const pin = document.getElementById("pin").value;
+
+  if (pin !== ADMIN_PIN) {
+    toast("Sai mã PIN");
+    return;
+  }
+
   document.getElementById("employeeBox").classList.add("hidden");
   renderSummary();
 }
+
 function logoutManager(){
   document.getElementById("employeeBox").classList.remove("hidden");
   document.getElementById("managerBox").classList.add("hidden");
 }
 
-/* SUMMARY */
-function renderSummary(){
-  const data=JSON.parse(localStorage.getItem("shifts")||"[]");
-  const sum={};
+/* ============================================================================
+   MANAGER – SUMMARY RENDER
+============================================================================ */
 
-  data.forEach(e=>{
-    Object.entries(e.shifts).forEach(([d,s])=>{
-      sum[d]??={};
-      sum[d][s]??=[];
-      sum[d][s].push(e.name);
+function renderSummary(){
+  const data = loadData();
+  const summary = {};
+
+  data.forEach(entry => {
+    Object.entries(entry.shifts).forEach(([day, shift]) => {
+      if (!summary[day]) summary[day] = {};
+      if (!summary[day][shift]) summary[day][shift] = [];
+      summary[day][shift].push(entry.name);
     });
   });
 
-  const box=document.getElementById("summary");
-  box.innerHTML="";
-  DAYS.forEach(d=>{
-    if(!sum[d]) return;
-    box.innerHTML+=`<div class="day">${d}</div>`;
-    SHIFTS.forEach(s=>{
-      if(!sum[d][s]) return;
-      box.innerHTML+=`
-        <div class="shiftBox">
-          <b>${s} (${sum[d][s].length})</b><br>
-          ${sum[d][s].map(n=>`<span class="badge">${n}</span>`).join("")}
-        </div>`;
+  const box = document.getElementById("summary");
+  box.innerHTML = "";
+
+  DAYS.forEach(day => {
+    if (!summary[day]) return;
+
+    const dayTitle = document.createElement("div");
+    dayTitle.className = "day";
+    dayTitle.textContent = day;
+    box.appendChild(dayTitle);
+
+    SHIFTS.forEach(shift => {
+      if (!summary[day][shift]) return;
+
+      const sb = document.createElement("div");
+      sb.className = "shiftBox";
+
+      const title = document.createElement("b");
+      title.textContent =
+        `${shift} (${summary[day][shift].length})`;
+
+      sb.appendChild(title);
+      sb.appendChild(document.createElement("br"));
+
+      summary[day][shift].forEach(name => {
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = name;
+        sb.appendChild(badge);
+      });
+
+      box.appendChild(sb);
     });
   });
 }
 
-/* CLEAR */
+/* ============================================================================
+   CLEAR ALL DATA
+============================================================================ */
+
 function clearAll(){
-  if(confirm("Xóa toàn bộ dữ liệu?")){
-    localStorage.removeItem("shifts");
+  if (confirm("Xóa toàn bộ dữ liệu đăng ký?")) {
+    localStorage.removeItem("shiftData");
     location.reload();
   }
 }
+
+/* ============================================================================
+   SERVICE WORKER REGISTER
+============================================================================ */
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("service-worker.js")
+      .then(() => {
+        console.log("✅ Service Worker registered");
+      })
+      .catch(err => {
+        console.error("❌ SW registration failed", err);
+      });
+  });
+}
+
+/* ============================================================================
+   END OF SCRIPT
+============================================================================ */
 </script>
 
 </body>
